@@ -96,65 +96,24 @@ function renderClientMarker(client) {
     const rep = getRep(client.repId);
     if (!rep) return;
     
-    // Créer un marker HTML personnalisé
-    const markerDiv = document.createElement('div');
-    markerDiv.className = 'client-marker';
-    markerDiv.style.cssText = `
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #4285f4;
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        position: relative;
-    `;
-    
     // Avatar du rep (mini)
     const avatarSrc = rep.photo || `data:image/svg+xml,${encodeURIComponent(generateAvatarSVG(rep.initials, rep.color))}`;
-    const avatarImg = document.createElement('img');
-    avatarImg.src = avatarSrc;
-    avatarImg.style.cssText = `
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        object-fit: cover;
-    `;
-    avatarImg.onerror = () => {
-        avatarImg.style.display = 'none';
-        markerDiv.innerHTML = `<span style="color: white; font-weight: 600; font-size: 14px;">${rep.initials}</span>`;
+    
+    // Créer une icône personnalisée
+    const icon = {
+        url: avatarSrc,
+        scaledSize: new google.maps.Size(40, 40),
+        anchor: new google.maps.Point(20, 20),
+        origin: new google.maps.Point(0, 0)
     };
     
-    markerDiv.appendChild(avatarImg);
-    
-    // Badge
-    const badge = document.createElement('div');
-    badge.style.cssText = `
-        position: absolute;
-        top: -4px;
-        right: -4px;
-        width: 18px;
-        height: 18px;
-        background: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    `;
-    badge.textContent = '🏢';
-    markerDiv.appendChild(badge);
-    
-    // Créer le marker Google Maps
-    const marker = new google.maps.marker.AdvancedMarkerElement({
+    // Créer le marker Google Maps (classique)
+    const marker = new google.maps.Marker({
         map: AppState.currentMap,
         position: { lat: client.location.lat, lng: client.location.lng },
-        content: markerDiv,
-        title: `${client.name} - ${rep.name}`
+        icon: icon,
+        title: `${client.name} - ${rep.name}`,
+        animation: google.maps.Animation.DROP
     });
     
     // Info window
