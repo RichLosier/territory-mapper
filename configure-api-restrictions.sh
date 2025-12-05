@@ -26,10 +26,11 @@ if command -v curl &> /dev/null && command -v jq &> /dev/null; then
     fi
     
     if [ ! -z "$PROJECT_ID" ]; then
-            echo "📦 Projet détecté: $PROJECT_ID"
-            echo ""
-            
-            # Obtenir un access token
+        echo "📦 Projet détecté: $PROJECT_ID"
+        echo ""
+        
+        # Obtenir un access token si gcloud est disponible
+        if command -v gcloud &> /dev/null; then
             echo "🔐 Authentification..."
             ACCESS_TOKEN=$(gcloud auth print-access-token 2>/dev/null)
             
