@@ -488,8 +488,14 @@ function submitRepForm() {
     // Rendre la liste mise à jour
     renderRepsList();
     
-    // TODO: Activer mode draw territory (phase suivante)
-    showToast(`✅ ${rep.name} créé. Dessinez maintenant son territoire sur la carte.`, 'success');
+    // Activer mode draw territory
+    if (AppState.currentMap) {
+        setTimeout(() => {
+            startDrawingTerritory(rep.id);
+        }, 500);
+    } else {
+        showToast(`✅ ${rep.name} créé. Dessinez son territoire une fois la carte chargée.`, 'success');
+    }
 }
 
 /**
