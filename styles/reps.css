@@ -1,0 +1,91 @@
+/* ═══════════════════════════════════════════════════════════════
+   REPS STYLES - Styles pour la gestion des reps
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Color Picker */
+.color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+.color-option.selected {
+    border-color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+    transform: scale(1.1);
+}
+
+/* Photo Upload */
+.photo-upload {
+    margin-top: var(--spacing-sm);
+}
+
+.photo-preview {
+    width: 100%;
+    height: 200px;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--bg-primary);
+}
+
+.photo-placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--spacing-lg);
+}
+
+.photo-placeholder span {
+    font-size: 48px;
+    display: block;
+    margin-bottom: var(--spacing-sm);
+}
+
+.photo-placeholder p {
+    margin: 0;
+    font-size: var(--font-size-small);
+}
+
+/* Rep Card Actions */
+.rep-card-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    margin-top: var(--spacing-sm);
+}
+
+.rep-card-actions .btn-small {
+    flex: 1;
+    min-width: 80px;
+    font-size: var(--font-size-small);
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+/* Rep Visibility Toggle */
+.rep-visibility-toggle {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    margin-right: var(--spacing-xs);
+}
+

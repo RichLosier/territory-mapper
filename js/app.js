@@ -46,6 +46,9 @@ function initApp() {
     // Initialiser l'interface utilisateur
     initUI();
     
+    // Initialiser le module reps
+    initReps();
+    
     // Si les clés API sont déjà configurées, charger Google Maps
     if (AppState.apiKeys.maps) {
         loadGoogleMaps();
