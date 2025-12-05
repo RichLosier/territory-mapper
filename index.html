@@ -203,8 +203,18 @@
                         </button>
                         <p class="form-help" style="margin-top: 8px;">
                             💡 <strong>Astuce:</strong> Vous pouvez utiliser la même clé API pour Maps et Places. 
-                            Assurez-vous simplement que les deux APIs sont activées dans Google Cloud Console.
+                            <strong>Important:</strong> Assurez-vous que <strong>Places API</strong> est activée dans 
+                            <a href="https://console.cloud.google.com/google/maps-apis/library" target="_blank">Google Cloud Console → APIs & Services → Library</a>
                         </p>
+                        <div style="margin-top: 12px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                            <p style="margin: 0; font-size: 12px; color: #856404;">
+                                <strong>⚠️ Erreur "REQUEST_DENIED"?</strong><br>
+                                1. Allez sur <a href="https://console.cloud.google.com/google/maps-apis/library" target="_blank">Google Cloud Console</a><br>
+                                2. Recherchez "Places API"<br>
+                                3. Cliquez "ENABLE"<br>
+                                4. Attendez quelques secondes puis retestez
+                            </p>
+                        </div>
                     </div>
 
                     <div class="form-actions">

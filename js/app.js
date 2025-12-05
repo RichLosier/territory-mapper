@@ -522,6 +522,7 @@ function testPlacesApiKey() {
         if (mapsKey) {
             key = mapsKey;
             input.value = mapsKey;
+            console.log('📋 Utilisation de la clé Maps pour Places');
         } else {
             updateStatus(status, 'error', 'Veuillez entrer une clé API');
             return;
@@ -529,23 +530,57 @@ function testPlacesApiKey() {
     }
     
     updateStatus(status, 'testing', 'Test en cours...');
+    console.log('🧪 Test Places API avec clé:', key.substring(0, 20) + '...');
     
-    // Test avec une requête Places API simple
-    fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=toronto&key=${key}`)
-        .then(response => response.json())
+    // Test avec une requête Places API simple (Text Search)
+    // Note: Cette API nécessite Places API d'être activée
+    const testUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=car+dealership+toronto&key=${key}`;
+    
+    fetch(testUrl)
+        .then(response => {
+            console.log('📡 Réponse Places API:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('📦 Données Places API:', data);
+            
             if (data.status === 'OK' || data.status === 'ZERO_RESULTS') {
                 updateStatus(status, 'success', '✅ Connexion réussie');
+                console.log('✅ Places API fonctionne correctement');
             } else if (data.status === 'REQUEST_DENIED') {
-                updateStatus(status, 'error', '❌ Places API non activée. Activez-la dans Google Cloud Console.');
+                const errorMsg = data.error_message || '';
+                let message = '❌ Places API non activée ou clé invalide';
+                
+                if (errorMsg.includes('API key not valid')) {
+                    message = '❌ Clé API invalide';
+                } else if (errorMsg.includes('This API project is not authorized')) {
+                    message = '❌ Places API non activée. Activez-la dans Google Cloud Console.';
+                } else if (errorMsg.includes('API key not valid. Please pass a valid API key')) {
+                    message = '❌ Clé API invalide ou restrictions trop strictes';
+                }
+                
+                updateStatus(status, 'error', message);
+                console.error('❌ Places API erreur:', data.status, errorMsg);
+                
+                // Afficher un message d'aide
+                showToast('💡 Activez Places API dans Google Cloud Console → APIs & Services → Library', 'warning');
             } else if (data.status === 'INVALID_REQUEST') {
-                updateStatus(status, 'error', '❌ Clé API invalide');
+                updateStatus(status, 'error', '❌ Requête invalide');
+                console.error('❌ Requête invalide:', data.error_message);
+            } else if (data.status === 'OVER_QUERY_LIMIT') {
+                updateStatus(status, 'error', '⚠️ Quota dépassé');
+                console.warn('⚠️ Quota Places API dépassé');
             } else {
-                updateStatus(status, 'error', `❌ Erreur: ${data.status} - ${data.error_message || ''}`);
+                const errorMsg = data.error_message || '';
+                updateStatus(status, 'error', `❌ Erreur: ${data.status}${errorMsg ? ' - ' + errorMsg : ''}`);
+                console.error('❌ Erreur Places API:', data.status, errorMsg);
             }
         })
         .catch(error => {
-            console.error('Erreur test Places API:', error);
+            console.error('❌ Erreur réseau Places API:', error);
             updateStatus(status, 'error', '❌ Erreur de connexion. Vérifiez votre connexion internet.');
         });
 }
