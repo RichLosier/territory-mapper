@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TerritoryPro - Cartographie Territoriale Intelligence pour équipes de vente">
+    <title>TerritoryPro - Territory Mapping Tool</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/map.css">
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <link rel="stylesheet" href="styles/modals.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+</head>
+<body>
+    <!-- ═══════════════════════════════════════════════════════════════
+         HEADER / TOP BAR
+         ═══════════════════════════════════════════════════════════════ -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <h1 class="app-title">TerritoryPro</h1>
+        </div>
+        <div class="top-bar-center">
+            <!-- Search bar sera ajoutée Phase 6 -->
+        </div>
+        <div class="top-bar-right">
+            <button class="btn-icon" id="btn-settings" aria-label="Paramètres">
+                ⚙️
+            </button>
+            <button class="btn-icon" id="btn-help" aria-label="Aide">
+                ?
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         MAIN LAYOUT
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Sidebar content sera ajouté progressivement -->
+            <div class="sidebar-header">
+                <h2>Territoires</h2>
+                <button class="btn-primary btn-small" id="btn-add-rep">
+                    + Add Rep
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="empty-state">
+                    <p>👤 Aucun représentant pour le moment.</p>
+                    <p class="text-small">Cliquez sur "+ Add Rep" pour commencer.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map Container -->
+        <div class="map-container" id="map-container">
+            <div id="map" class="map"></div>
+            <div class="map-overlay">
+                <!-- Loading spinner sera ajouté -->
+                <div class="loading-spinner" id="loading-spinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Chargement de la carte...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         MODALS
+         ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="modal-settings" role="dialog" aria-labelledby="modal-settings-title" aria-hidden="true">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modal-settings-title">⚙️ Paramètres</h2>
+                <button class="btn-icon btn-close" id="btn-close-settings" aria-label="Fermer">
+                    ✕
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="api-keys">API Keys</button>
+                    <button class="tab-btn" data-tab="display">Affichage</button>
+                    <button class="tab-btn" data-tab="data">Données</button>
+                    <button class="tab-btn" data-tab="team">Équipe</button>
+                    <button class="tab-btn" data-tab="integrations">Intégrations</button>
+                    <button class="tab-btn" data-tab="help">Aide</button>
+                </div>
+
+                <!-- Tab: API Keys -->
+                <div class="tab-content active" id="tab-api-keys">
+                    <div class="form-group">
+                        <label for="input-maps-key">
+                            Google Maps JavaScript API Key:
+                        </label>
+                        <div class="input-with-actions">
+                            <input 
+                                type="password" 
+                                id="input-maps-key" 
+                                class="form-input"
+                                placeholder="Entrez votre clé API Google Maps"
+                            >
+                            <button class="btn-icon" id="btn-toggle-maps-key" aria-label="Afficher/Masquer">
+                                👁️
+                            </button>
+                            <button class="btn-secondary" id="btn-test-maps-key">
+                                Test Connection
+                            </button>
+                        </div>
+                        <div class="status-indicator" id="status-maps-key">
+                            <span class="status-text">Non configuré</span>
+                        </div>
+                        <p class="form-help">
+                            <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">
+                                Obtenir une clé API →
+                            </a>
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-places-key">
+                            Google Places API Key:
+                        </label>
+                        <div class="input-with-actions">
+                            <input 
+                                type="password" 
+                                id="input-places-key" 
+                                class="form-input"
+                                placeholder="Entrez votre clé API Google Places"
+                            >
+                            <button class="btn-icon" id="btn-toggle-places-key" aria-label="Afficher/Masquer">
+                                👁️
+                            </button>
+                            <button class="btn-secondary" id="btn-test-places-key">
+                                Test Connection
+                            </button>
+                        </div>
+                        <div class="status-indicator" id="status-places-key">
+                            <span class="status-text">Non configuré</span>
+                        </div>
+                        <p class="form-help">
+                            <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">
+                                Obtenir une clé API →
+                            </a>
+                        </p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-primary" id="btn-save-keys">
+                            Enregistrer les clés
+                        </button>
+                        <button class="btn-secondary" id="btn-clear-keys">
+                            Effacer les clés
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Autres tabs seront ajoutés dans phases suivantes -->
+                <div class="tab-content" id="tab-display" style="display: none;">
+                    <p>Section Affichage - À venir</p>
+                </div>
+                <div class="tab-content" id="tab-data" style="display: none;">
+                    <p>Section Données - À venir</p>
+                </div>
+                <div class="tab-content" id="tab-team" style="display: none;">
+                    <p>Section Équipe - À venir</p>
+                </div>
+                <div class="tab-content" id="tab-integrations" style="display: none;">
+                    <p>Section Intégrations - À venir</p>
+                </div>
+                <div class="tab-content" id="tab-help" style="display: none;">
+                    <p>Section Aide - À venir</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="modal-help" role="dialog" aria-labelledby="modal-help-title" aria-hidden="true">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-help-title">Aide</h2>
+                <button class="btn-icon btn-close" id="btn-close-help" aria-label="Fermer">
+                    ✕
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Guide d'utilisation - À venir</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SCRIPTS
+         ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Google Maps API - Sera chargé dynamiquement avec la clé API -->
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
