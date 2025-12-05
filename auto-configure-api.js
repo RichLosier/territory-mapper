@@ -9,6 +9,7 @@ const https = require('https');
 const readline = require('readline');
 
 const API_KEY = 'AIzaSyA21ef6cszYLyn22AiihKOkLa9ss0EIEDQ';
+const PROJECT_ID = 'ai-bcg';
 const VERCEL_URL = 'https://wx-interactive-reps-mapping-r8ja86k6e-richard-losiers-projects.vercel.app';
 
 const rl = readline.createInterface({
@@ -98,38 +99,19 @@ async function main() {
     console.log(`📋 Clé API: ${API_KEY.substring(0, 20)}...`);
     console.log(`🌐 URL Vercel: ${VERCEL_URL}\n`);
     
+    // Utiliser le projet spécifié
+    const projectId = PROJECT_ID;
+    console.log(`✅ Projet Google Cloud: ${projectId}\n`);
+    
     // Méthode 1: Utiliser gcloud si disponible
     const { execSync } = require('child_process');
-    let projectId = null;
     
     try {
-        projectId = execSync('gcloud config get-value project', { encoding: 'utf-8' }).trim();
-        console.log(`✅ Projet Google Cloud détecté: ${projectId}\n`);
-        
         console.log('🔐 Authentification avec gcloud...');
-        try {
-            execSync('gcloud auth application-default login', { stdio: 'inherit' });
-            console.log('✅ Authentification réussie!\n');
-        } catch (e) {
-            console.log('⚠️  Authentification annulée ou échouée\n');
-        }
+        execSync('gcloud auth application-default login', { stdio: 'inherit' });
+        console.log('✅ Authentification réussie!\n');
     } catch (e) {
-        console.log('⚠️  gcloud non disponible, utilisation de la méthode manuelle\n');
-    }
-    
-    if (!projectId) {
-        projectId = await question('Entrez votre Project ID Google Cloud: ');
-        if (!projectId.trim()) {
-            console.log('\n❌ Project ID requis');
-            console.log('\n📖 Configuration manuelle requise:');
-            console.log('1. Allez sur: https://console.cloud.google.com/apis/credentials');
-            console.log(`2. Cliquez sur votre clé API: ${API_KEY.substring(0, 20)}...`);
-            console.log('3. Application restrictions → HTTP referrers');
-            console.log('4. Ajoutez:');
-            restrictions.forEach(r => console.log(`   • ${r}`));
-            console.log('5. Save\n');
-            process.exit(0);
-        }
+        console.log('⚠️  Authentification gcloud non disponible\n');
     }
     
     const accessToken = await getAccessToken();

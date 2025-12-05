@@ -5,11 +5,13 @@
 # ═══════════════════════════════════════════════════════════════
 
 API_KEY="AIzaSyA21ef6cszYLyn22AiihKOkLa9ss0EIEDQ"
+PROJECT_ID="ai-bcg"
 VERCEL_URL="https://wx-interactive-reps-mapping-r8ja86k6e-richard-losiers-projects.vercel.app"
 
 echo "🔧 Configuration automatique Google Cloud API..."
 echo ""
 echo "📋 Clé API: ${API_KEY:0:20}..."
+echo "📦 Projet: $PROJECT_ID"
 echo "🌐 URL Vercel: $VERCEL_URL"
 echo ""
 
@@ -18,10 +20,12 @@ if command -v curl &> /dev/null && command -v jq &> /dev/null; then
     echo "✅ Outils requis disponibles"
     echo ""
     
-    # Essayer d'obtenir le project ID depuis gcloud
-    if command -v gcloud &> /dev/null; then
+    # Utiliser le projet spécifié ou essayer gcloud
+    if [ -z "$PROJECT_ID" ] && command -v gcloud &> /dev/null; then
         PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
-        if [ ! -z "$PROJECT_ID" ]; then
+    fi
+    
+    if [ ! -z "$PROJECT_ID" ]; then
             echo "📦 Projet détecté: $PROJECT_ID"
             echo ""
             
