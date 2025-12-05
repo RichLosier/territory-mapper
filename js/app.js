@@ -683,8 +683,26 @@ function initRegionSelector() {
     selectRegion.addEventListener('change', (e) => {
         const region = e.target.value;
         if (region) {
-            selectRegion(region);
-            updateScanButton();
+            // Vérifier que la carte est disponible avant de sélectionner la région
+            if (AppState.currentMap && typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                selectRegion(region);
+                updateScanButton();
+            } else {
+                console.warn('⚠️ Carte non disponible, attente du chargement...');
+                showToast('⚠️ Attente du chargement de la carte...', 'info');
+                // Attendre que la carte soit chargée
+                const checkMapReady = setInterval(() => {
+                    if (AppState.currentMap && typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                        clearInterval(checkMapReady);
+                        selectRegion(region);
+                        updateScanButton();
+                    }
+                }, 100);
+                
+                setTimeout(() => {
+                    clearInterval(checkMapReady);
+                }, 5000);
+            }
         } else {
             DealersState.currentRegion = null;
             btnScanDealers.disabled = true;

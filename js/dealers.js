@@ -113,6 +113,32 @@ function selectRegion(region) {
     
     DealersState.currentRegion = region;
     
+    // Vérifier que Google Maps API est chargée
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        console.warn('⚠️ Google Maps API non chargée, attente...');
+        showToast('⚠️ Google Maps en cours de chargement...', 'info');
+        
+        // Attendre que Google Maps soit chargé
+        const checkGoogleMaps = setInterval(() => {
+            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                clearInterval(checkGoogleMaps);
+                // Réessayer après que Google Maps soit chargé
+                setTimeout(() => selectRegion(region), 100);
+            }
+        }, 100);
+        
+        // Timeout après 10 secondes
+        setTimeout(() => {
+            clearInterval(checkGoogleMaps);
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                console.error('❌ Google Maps API toujours non disponible après 10 secondes');
+                showToast('❌ Google Maps n\'est pas chargé. Rechargez la page.', 'error');
+            }
+        }, 10000);
+        
+        return;
+    }
+    
     // Centrer la carte sur la région
     if (AppState.currentMap) {
         const regionData = REGIONS[region];
@@ -120,9 +146,15 @@ function selectRegion(region) {
         AppState.currentMap.setCenter(regionData.center);
         AppState.currentMap.setZoom(8);
         
-        // Attendre que la carte soit centrée avant d'afficher les dealers
+        // Attendre que la carte soit centrée AVANT de charger les dealers
+        // Bug fix: Ne pas charger les dealers pendant l'animation
         google.maps.event.addListenerOnce(AppState.currentMap, 'idle', () => {
             console.log('✅ Carte centrée sur', region);
+            // Maintenant que la carte est centrée, charger les dealers
+            loadMockDealers(region);
+            saveDealers();
+            const dealerCount = DealersState.dealers.filter(d => d.region === region).length;
+            showToast(`📍 Région ${region} sélectionnée - ${dealerCount} dealers`, 'success');
         });
     } else {
         console.warn('⚠️ Carte non disponible, attente...');
@@ -130,10 +162,8 @@ function selectRegion(region) {
         const checkMap = setInterval(() => {
             if (AppState.currentMap) {
                 clearInterval(checkMap);
-                const regionData = REGIONS[region];
-                AppState.currentMap.setCenter(regionData.center);
-                AppState.currentMap.setZoom(8);
-                loadMockDealers(region);
+                // Réessayer avec la carte disponible
+                selectRegion(region);
             }
         }, 100);
         
@@ -145,15 +175,7 @@ function selectRegion(region) {
                 showToast('⚠️ La carte n\'est pas encore chargée. Rechargez la page.', 'warning');
             }
         }, 5000);
-        
-        return;
     }
-    
-    // Charger les dealers mockés pour preview
-    loadMockDealers(region);
-    
-    saveDealers();
-    showToast(`📍 Région ${region} sélectionnée - ${DealersState.dealers.filter(d => d.region === region).length} dealers`, 'success');
 }
 
 /**
