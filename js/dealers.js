@@ -332,7 +332,7 @@ window.assignDealer = function(placeId) {
 };
 
 /**
- * Scan les dealers pour une région (mock pour l'instant)
+ * Scan les dealers pour une région avec Google Places API
  * @param {string} region - Région à scanner
  */
 function scanDealersForRegion(region) {
@@ -341,16 +341,282 @@ function scanDealersForRegion(region) {
         return;
     }
     
-    DealersState.scanning = true;
-    showToast(`🔍 Scan des dealers ${region} en cours...`, 'info');
+    // Vérifier que Places API est disponible
+    if (!AppState.apiKeys.places) {
+        showToast('⚠️ Places API non configurée. Configurez-la dans Settings.', 'warning');
+        return;
+    }
     
-    // Simuler le scan
-    setTimeout(() => {
-        loadMockDealers(region);
-        DealersState.scanning = false;
-        DealersState.lastScan = new Date().toISOString();
-        saveDealers();
-        showToast(`✅ ${DealersState.dealers.filter(d => d.region === region).length} dealers trouvés en ${region}`, 'success');
-    }, 1500);
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        showToast('⚠️ Google Maps non chargé. Attendez quelques secondes.', 'warning');
+        return;
+    }
+    
+    DealersState.scanning = true;
+    
+    // Créer/ouvrir la modal de scan
+    openScanModal(region);
+    
+    // Commencer le scan réel
+    startRealScan(region);
+}
+
+/**
+ * Ouvre la modal de scan avec progress bar
+ */
+function openScanModal(region) {
+    // Vérifier si la modal existe déjà
+    let modal = document.getElementById('modal-scan-dealers');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-scan-dealers';
+        modal.className = 'modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>🔍 Scan des Dealers - ${region}</h2>
+                    <button class="btn-icon btn-close" id="btn-close-scan" aria-label="Fermer">
+                        ✕
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="scan-progress">
+                        <div class="progress-bar-large">
+                            <div class="progress-fill-large" id="scan-progress-fill"></div>
+                        </div>
+                        <p class="text-small" id="scan-progress-text" style="margin-top: 12px; text-align: center;">
+                            Initialisation...
+                        </p>
+                        <p class="text-small" id="scan-stats" style="margin-top: 8px; text-align: center; color: #666;">
+                            Dealers trouvés: 0
+                        </p>
+                    </div>
+                    <div class="scan-controls" style="margin-top: 24px; display: flex; gap: 8px; justify-content: center;">
+                        <button class="btn-secondary" id="btn-pause-scan" style="display: none;">
+                            ⏸️ Pause
+                        </button>
+                        <button class="btn-danger" id="btn-cancel-scan">
+                            ❌ Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Event listeners
+        document.getElementById('btn-close-scan')?.addEventListener('click', () => {
+            if (confirm('Arrêter le scan en cours?')) {
+                cancelScan();
+            }
+        });
+        document.getElementById('btn-cancel-scan')?.addEventListener('click', () => {
+            if (confirm('Arrêter le scan en cours?')) {
+                cancelScan();
+            }
+        });
+    }
+    
+    openModal('modal-scan-dealers');
+}
+
+/**
+ * Commence le scan réel avec Google Places API
+ * @param {string} region - Région à scanner
+ */
+function startRealScan(region) {
+    const regionData = REGIONS[region];
+    const foundDealers = new Map(); // Utiliser Map pour dédupliquer par place_id
+    
+    // Supprimer les anciens dealers de cette région
+    DealersState.dealers = DealersState.dealers.filter(d => d.region !== region);
+    
+    // Créer une grille de recherche pour couvrir toute la région
+    const gridSize = 0.5; // ~50km entre chaque point
+    const searchPoints = [];
+    
+    for (let lat = regionData.bounds.south; lat < regionData.bounds.north; lat += gridSize) {
+        for (let lng = regionData.bounds.west; lng < regionData.bounds.east; lng += gridSize) {
+            searchPoints.push({ lat, lng });
+        }
+    }
+    
+    console.log(`📍 ${searchPoints.length} points de recherche pour ${region}`);
+    
+    let currentIndex = 0;
+    let totalFound = 0;
+    const maxResults = 60; // Limite Places API par requête
+    
+    // Mettre à jour le progress
+    function updateProgress(index, total, found) {
+        const progress = Math.min((index / total) * 100, 100);
+        const fillEl = document.getElementById('scan-progress-fill');
+        const textEl = document.getElementById('scan-progress-text');
+        const statsEl = document.getElementById('scan-stats');
+        
+        if (fillEl) fillEl.style.width = `${progress}%`;
+        if (textEl) {
+            textEl.textContent = `Scanning... ${index}/${total} cells | ${found} dealers found`;
+        }
+        if (statsEl) {
+            statsEl.textContent = `Dealers trouvés: ${found}`;
+        }
+    }
+    
+    // Fonction récursive pour scanner tous les points
+    async function scanNextPoint() {
+        if (!DealersState.scanning || currentIndex >= searchPoints.length) {
+            // Scan terminé
+            finishScan(region, foundDealers);
+            return;
+        }
+        
+        const point = searchPoints[currentIndex];
+        currentIndex++;
+        
+        updateProgress(currentIndex, searchPoints.length, foundDealers.size);
+        
+        try {
+            // Utiliser Places API Text Search pour chercher les dealers
+            const queries = [
+                'car dealership',
+                'concessionnaire automobile',
+                'auto dealer',
+                'car dealer'
+            ];
+            
+            // Chercher avec chaque query
+            for (const query of queries) {
+                const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${point.lat},${point.lng}&radius=25000&key=${AppState.apiKeys.places}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.status === 'OK' && data.results) {
+                    data.results.forEach(place => {
+                        // Vérifier que c'est bien un dealer (type car_dealer)
+                        const isDealer = place.types && (
+                            place.types.includes('car_dealer') ||
+                            place.types.includes('car_repair') ||
+                            place.name.toLowerCase().includes('dealership') ||
+                            place.name.toLowerCase().includes('concessionnaire') ||
+                            place.name.toLowerCase().includes('auto') ||
+                            place.name.toLowerCase().includes('honda') ||
+                            place.name.toLowerCase().includes('toyota') ||
+                            place.name.toLowerCase().includes('ford') ||
+                            place.name.toLowerCase().includes('mazda')
+                        );
+                        
+                        if (isDealer && !foundDealers.has(place.place_id)) {
+                            foundDealers.set(place.place_id, {
+                                placeId: place.place_id,
+                                name: place.name,
+                                address: place.formatted_address || place.vicinity || '',
+                                lat: place.geometry.location.lat,
+                                lng: place.geometry.location.lng,
+                                rating: place.rating || 0,
+                                reviews: place.user_ratings_total || 0,
+                                phone: null, // Sera récupéré avec Place Details si nécessaire
+                                website: null,
+                                types: place.types || [],
+                                region: region,
+                                status: 'available',
+                                assignedTo: null
+                            });
+                        }
+                    });
+                }
+                
+                // Rate limiting: attendre un peu entre les requêtes
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Continuer avec le point suivant
+            setTimeout(scanNextPoint, 200);
+            
+        } catch (error) {
+            console.error('Erreur lors du scan:', error);
+            // Continuer malgré l'erreur
+            setTimeout(scanNextPoint, 500);
+        }
+    }
+    
+    // Commencer le scan
+    scanNextPoint();
+}
+
+/**
+ * Termine le scan et sauvegarde les résultats
+ */
+function finishScan(region, foundDealersMap) {
+    DealersState.scanning = false;
+    
+    // Convertir Map en Array
+    const newDealers = Array.from(foundDealersMap.values());
+    
+    // Ajouter aux dealers existants
+    DealersState.dealers.push(...newDealers);
+    
+    DealersState.lastScan = new Date().toISOString();
+    saveDealers();
+    
+    // Fermer la modal
+    closeModal('modal-scan-dealers');
+    
+    // Rendre les nouveaux dealers sur la carte
+    renderAllDealers();
+    
+    // Mettre à jour le statut
+    const scanStatus = document.getElementById('scan-status');
+    if (scanStatus) {
+        scanStatus.textContent = `${newDealers.length} dealers en ${region}`;
+    }
+    
+    showToast(`✅ ${newDealers.length} dealers trouvés en ${region}`, 'success');
+    console.log(`✅ Scan terminé: ${newDealers.length} dealers trouvés`);
+}
+
+/**
+ * Annule le scan en cours
+ */
+function cancelScan() {
+    DealersState.scanning = false;
+    closeModal('modal-scan-dealers');
+    showToast('Scan annulé', 'info');
+}
+
+/**
+ * Charge les dealers mockés pour preview (seulement si aucun dealer n'existe)
+ */
+function loadMockDealers(region) {
+    // Ne charger les mockés QUE si aucun dealer n'existe pour cette région
+    const existingDealers = DealersState.dealers.filter(d => d.region === region);
+    
+    if (existingDealers.length > 0) {
+        console.log(`📍 ${existingDealers.length} dealers déjà chargés pour ${region}`);
+        renderAllDealers();
+        return;
+    }
+    
+    // Sinon, charger les mockés temporairement
+    const mockDealers = region === 'Ontario' ? MOCK_DEALERS_ONTARIO : MOCK_DEALERS_QUEBEC;
+    
+    mockDealers.forEach(dealer => {
+        DealersState.dealers.push({
+            ...dealer,
+            region: region,
+            status: 'available',
+            assignedTo: null
+        });
+    });
+    
+    saveDealers();
+    renderAllDealers();
+    
+    console.log(`📍 ${mockDealers.length} dealers mockés chargés pour ${region} (temporaire)`);
 }
 
