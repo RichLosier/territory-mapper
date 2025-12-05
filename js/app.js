@@ -25,6 +25,33 @@ const AppState = {
 function initApp() {
     console.log('🚀 Initialisation TerritoryPro...');
     
+    // ⚠️ Détecter si on est en file:/// et avertir immédiatement
+    if (window.location.protocol === 'file:') {
+        console.error('❌ Application ouverte depuis file:///');
+        console.error('⚠️ Google Maps nécessite un serveur HTTP');
+        console.error('💡 Utilisez: python3 -m http.server 8000');
+        
+        // Afficher le message d'erreur immédiatement
+        setTimeout(() => {
+            const errorDiv = document.getElementById('map-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+            }
+            showToast('⚠️ Utilisez un serveur local (voir instructions)', 'warning');
+        }, 500);
+        
+        // Initialiser quand même l'interface (mais pas Google Maps)
+        initUI();
+        initReps();
+        initCsvUpload();
+        initClients();
+        initDealers();
+        initRegionSelector();
+        
+        AppState.initialized = true;
+        return; // Ne pas charger Google Maps
+    }
+    
     // Configuration automatique de la clé API (si fournie)
     const defaultApiKey = 'AIzaSyA21ef6cszYLyn22AiihKOkLa9ss0EIEDQ';
     const savedKeys = Storage.get('apiKeys');
