@@ -401,8 +401,27 @@ function initSettingsApiKeys() {
             if (mapsKey) {
                 inputPlaces.value = mapsKey;
                 showToast('✅ Même clé appliquée pour Places API', 'success');
+                // Tester automatiquement après avoir copié
+                setTimeout(() => {
+                    testPlacesApiKey();
+                }, 300);
             } else {
                 showToast('⚠️ Entrez d\'abord une clé Maps', 'warning');
+            }
+        });
+    }
+    
+    // Auto-copier Maps key to Places si Places est vide quand Maps change
+    if (inputMaps && inputPlaces) {
+        inputMaps.addEventListener('blur', () => {
+            const mapsKey = inputMaps.value.trim();
+            const placesKey = inputPlaces.value.trim();
+            if (mapsKey && !placesKey) {
+                // Suggérer d'utiliser la même clé
+                const btnUseSame = document.getElementById('btn-use-same-key');
+                if (btnUseSame) {
+                    btnUseSame.style.display = 'inline-block';
+                }
             }
         });
     }
@@ -470,11 +489,18 @@ function testPlacesApiKey() {
     
     if (!input || !status) return;
     
-    const key = input.value.trim();
+    let key = input.value.trim();
     
+    // Si vide, utiliser la clé Maps
     if (!key) {
-        updateStatus(status, 'error', 'Veuillez entrer une clé API');
-        return;
+        const mapsKey = document.getElementById('input-maps-key')?.value.trim();
+        if (mapsKey) {
+            key = mapsKey;
+            input.value = mapsKey;
+        } else {
+            updateStatus(status, 'error', 'Veuillez entrer une clé API');
+            return;
+        }
     }
     
     updateStatus(status, 'testing', 'Test en cours...');
@@ -486,14 +512,16 @@ function testPlacesApiKey() {
             if (data.status === 'OK' || data.status === 'ZERO_RESULTS') {
                 updateStatus(status, 'success', '✅ Connexion réussie');
             } else if (data.status === 'REQUEST_DENIED') {
-                updateStatus(status, 'error', '❌ Clé API invalide ou non autorisée');
+                updateStatus(status, 'error', '❌ Places API non activée. Activez-la dans Google Cloud Console.');
+            } else if (data.status === 'INVALID_REQUEST') {
+                updateStatus(status, 'error', '❌ Clé API invalide');
             } else {
-                updateStatus(status, 'error', `❌ Erreur: ${data.status}`);
+                updateStatus(status, 'error', `❌ Erreur: ${data.status} - ${data.error_message || ''}`);
             }
         })
         .catch(error => {
             console.error('Erreur test Places API:', error);
-            updateStatus(status, 'error', '❌ Erreur de connexion');
+            updateStatus(status, 'error', '❌ Erreur de connexion. Vérifiez votre connexion internet.');
         });
 }
 
