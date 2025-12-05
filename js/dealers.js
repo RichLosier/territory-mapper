@@ -40,6 +40,41 @@ const REGIONS = {
     }
 };
 
+/**
+ * Retourne les coordonnées approximatives d'une ville
+ */
+function getCityCoordinates(cityName, region) {
+    // Coordonnées approximatives des principales villes
+    const cityCoords = {
+        'Ontario': {
+            'Toronto': { lat: 43.6532, lng: -79.3832 },
+            'Ottawa': { lat: 45.3499, lng: -75.6948 },
+            'Hamilton': { lat: 43.2557, lng: -79.8711 },
+            'London': { lat: 42.9849, lng: -81.2453 },
+            'Windsor': { lat: 42.3149, lng: -83.0369 },
+            'Kitchener': { lat: 43.4516, lng: -80.4925 },
+            'Mississauga': { lat: 43.5890, lng: -79.6441 },
+            'Brampton': { lat: 43.7315, lng: -79.7624 },
+            'Markham': { lat: 43.8561, lng: -79.3370 },
+            'Vaughan': { lat: 43.8563, lng: -79.5085 }
+        },
+        'Québec': {
+            'Montréal': { lat: 45.5017, lng: -73.5673 },
+            'Québec': { lat: 46.8139, lng: -71.2080 },
+            'Laval': { lat: 45.6067, lng: -73.7123 },
+            'Gatineau': { lat: 45.4765, lng: -75.7013 },
+            'Longueuil': { lat: 45.5369, lng: -73.5103 },
+            'Sherbrooke': { lat: 45.4000, lng: -71.9000 },
+            'Saguenay': { lat: 48.4167, lng: -71.0667 },
+            'Lévis': { lat: 46.8000, lng: -71.1833 },
+            'Trois-Rivières': { lat: 46.3500, lng: -72.5500 },
+            'Terrebonne': { lat: 45.7000, lng: -73.6333 }
+        }
+    };
+    
+    return cityCoords[region]?.[cityName] || null;
+}
+
 // Données mockées de dealers pour preview
 const MOCK_DEALERS_ONTARIO = [
     { name: 'Honda Downtown Toronto', address: '789 Yonge St, Toronto', lat: 43.6532, lng: -79.3832, rating: 4.5, reviews: 234, phone: '(416) 555-1234', placeId: 'mock_1' },
@@ -435,17 +470,35 @@ function startRealScan(region) {
     // Supprimer les anciens dealers de cette région
     DealersState.dealers = DealersState.dealers.filter(d => d.region !== region);
     
-    // Créer une grille de recherche pour couvrir toute la région
-    const gridSize = 0.5; // ~50km entre chaque point
+    // Créer une grille de recherche intelligente pour couvrir toute la région
+    // Utiliser les villes principales + grille pour les zones rurales
     const searchPoints = [];
     
+    // 1. Ajouter les villes principales (plus de dealers)
+    regionData.cities.forEach(city => {
+        // Utiliser Geocoding pour obtenir les coordonnées de la ville
+        // Pour l'instant, utiliser des coordonnées approximatives
+        const cityCoords = getCityCoordinates(city, region);
+        if (cityCoords) {
+            searchPoints.push(cityCoords);
+        }
+    });
+    
+    // 2. Ajouter une grille pour couvrir les zones rurales (moins dense)
+    const gridSize = 0.8; // ~80km entre chaque point (plus large pour réduire les requêtes)
     for (let lat = regionData.bounds.south; lat < regionData.bounds.north; lat += gridSize) {
         for (let lng = regionData.bounds.west; lng < regionData.bounds.east; lng += gridSize) {
-            searchPoints.push({ lat, lng });
+            // Vérifier si ce point n'est pas trop proche d'une ville déjà ajoutée
+            const tooClose = searchPoints.some(point => 
+                calculateDistance({ lat, lng }, point) < 20 // Moins de 20km d'une ville
+            );
+            if (!tooClose) {
+                searchPoints.push({ lat, lng });
+            }
         }
     }
     
-    console.log(`📍 ${searchPoints.length} points de recherche pour ${region}`);
+    console.log(`📍 ${searchPoints.length} points de recherche pour ${region} (${regionData.cities.length} villes + grille)`);
     
     let currentIndex = 0;
     let totalFound = 0;
@@ -481,46 +534,26 @@ function startRealScan(region) {
         updateProgress(currentIndex, searchPoints.length, foundDealers.size);
         
         try {
-            // Utiliser Places API Text Search pour chercher les dealers
-            const queries = [
-                'car dealership',
-                'concessionnaire automobile',
-                'auto dealer',
-                'car dealer'
-            ];
+            // Utiliser Places API Nearby Search avec type=car_dealer (plus efficace)
+            // Puis Text Search pour les autres termes
+            const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${point.lat},${point.lng}&radius=30000&type=car_dealer&key=${AppState.apiKeys.places}`;
             
-            // Chercher avec chaque query
-            for (const query of queries) {
-                const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${point.lat},${point.lng}&radius=25000&key=${AppState.apiKeys.places}`;
+            try {
+                const nearbyResponse = await fetch(nearbyUrl);
+                const nearbyData = await nearbyResponse.json();
                 
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.status === 'OK' && data.results) {
-                    data.results.forEach(place => {
-                        // Vérifier que c'est bien un dealer (type car_dealer)
-                        const isDealer = place.types && (
-                            place.types.includes('car_dealer') ||
-                            place.types.includes('car_repair') ||
-                            place.name.toLowerCase().includes('dealership') ||
-                            place.name.toLowerCase().includes('concessionnaire') ||
-                            place.name.toLowerCase().includes('auto') ||
-                            place.name.toLowerCase().includes('honda') ||
-                            place.name.toLowerCase().includes('toyota') ||
-                            place.name.toLowerCase().includes('ford') ||
-                            place.name.toLowerCase().includes('mazda')
-                        );
-                        
-                        if (isDealer && !foundDealers.has(place.place_id)) {
+                if (nearbyData.status === 'OK' && nearbyData.results) {
+                    nearbyData.results.forEach(place => {
+                        if (!foundDealers.has(place.place_id)) {
                             foundDealers.set(place.place_id, {
                                 placeId: place.place_id,
                                 name: place.name,
-                                address: place.formatted_address || place.vicinity || '',
+                                address: place.vicinity || place.formatted_address || '',
                                 lat: place.geometry.location.lat,
                                 lng: place.geometry.location.lng,
                                 rating: place.rating || 0,
                                 reviews: place.user_ratings_total || 0,
-                                phone: null, // Sera récupéré avec Place Details si nécessaire
+                                phone: null,
                                 website: null,
                                 types: place.types || [],
                                 region: region,
@@ -531,17 +564,67 @@ function startRealScan(region) {
                     });
                 }
                 
-                // Rate limiting: attendre un peu entre les requêtes
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Si on a trouvé des résultats avec Nearby Search, on peut skip Text Search pour ce point
+                // Sinon, essayer Text Search avec des queries spécifiques
+                if (!nearbyData.results || nearbyData.results.length === 0) {
+                    const queries = [
+                        'car dealership',
+                        'concessionnaire automobile'
+                    ];
+                    
+                    for (const query of queries) {
+                        const textUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${point.lat},${point.lng}&radius=30000&key=${AppState.apiKeys.places}`;
+                        
+                        const textResponse = await fetch(textUrl);
+                        const textData = await textResponse.json();
+                        
+                        if (textData.status === 'OK' && textData.results) {
+                            textData.results.forEach(place => {
+                                // Filtrer pour ne garder que les vrais dealers
+                                const isDealer = place.types && (
+                                    place.types.includes('car_dealer') ||
+                                    place.name.toLowerCase().includes('dealership') ||
+                                    place.name.toLowerCase().includes('concessionnaire')
+                                );
+                                
+                                if (isDealer && !foundDealers.has(place.place_id)) {
+                                    foundDealers.set(place.place_id, {
+                                        placeId: place.place_id,
+                                        name: place.name,
+                                        address: place.formatted_address || place.vicinity || '',
+                                        lat: place.geometry.location.lat,
+                                        lng: place.geometry.location.lng,
+                                        rating: place.rating || 0,
+                                        reviews: place.user_ratings_total || 0,
+                                        phone: null,
+                                        website: null,
+                                        types: place.types || [],
+                                        region: region,
+                                        status: 'available',
+                                        assignedTo: null
+                                    });
+                                }
+                            });
+                        }
+                        
+                        // Rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 150));
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors de la requête Places API:', error);
             }
             
+            // Rate limiting entre les points
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
             // Continuer avec le point suivant
-            setTimeout(scanNextPoint, 200);
+            setTimeout(scanNextPoint, 100);
             
         } catch (error) {
             console.error('Erreur lors du scan:', error);
             // Continuer malgré l'erreur
-            setTimeout(scanNextPoint, 500);
+            setTimeout(scanNextPoint, 300);
         }
     }
     
