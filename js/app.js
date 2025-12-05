@@ -122,8 +122,26 @@ function loadGoogleMaps() {
                 spinner.style.display = 'none';
             }
             
+            // Vérifier que google.maps est disponible
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                console.error('❌ google.maps non disponible après callback');
+                showToast('❌ Erreur: Google Maps non disponible', 'error');
+                return;
+            }
+            
+            console.log('🗺️ Initialisation de la carte...');
+            
             // Initialiser la carte
             initMap();
+            
+            // Vérifier que la carte a été créée
+            if (!AppState.currentMap) {
+                console.error('❌ La carte n\'a pas été créée');
+                showToast('❌ Erreur lors de la création de la carte', 'error');
+                return;
+            }
+            
+            console.log('✅ Carte créée avec succès');
             
             // Initialiser les territoires
             initTerritories();
@@ -139,9 +157,14 @@ function loadGoogleMaps() {
             
             // Sélectionner Ontario par défaut si aucune région
             if (!DealersState.currentRegion) {
+                console.log('📍 Sélection automatique d\'Ontario...');
                 setTimeout(() => {
                     selectRegion('Ontario');
                 }, 500);
+            } else {
+                // Si région déjà sélectionnée, recharger les dealers
+                console.log('📍 Région déjà sélectionnée:', DealersState.currentRegion);
+                renderAllDealers();
             }
             
             // Ajouter des clients mockés pour preview (si aucun client)
@@ -149,6 +172,8 @@ function loadGoogleMaps() {
                 addMockClients();
             }, 1000);
         };
+    } else {
+        console.log('⚠️ Callback onGoogleMapsLoaded existe déjà');
     }
     
     // Créer script tag pour charger Google Maps
