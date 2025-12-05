@@ -49,6 +49,12 @@ function initApp() {
     // Initialiser le module reps
     initReps();
     
+    // Initialiser le module CSV upload
+    initCsvUpload();
+    
+    // Initialiser le module clients
+    initClients();
+    
     // Si les clés API sont déjà configurées, charger Google Maps
     if (AppState.apiKeys.maps) {
         loadGoogleMaps();
@@ -131,6 +137,14 @@ window.onGoogleMapsLoaded = function() {
     
     // Rendre tous les territoires existants
     renderAllTerritories();
+    
+    // Rendre tous les clients existants
+    renderAllClients();
+    
+    // Ajouter des clients mockés pour preview (si aucun client)
+    setTimeout(() => {
+        addMockClients();
+    }, 1000);
 };
 
 /**

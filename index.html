@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/modals.css">
     <link rel="stylesheet" href="styles/reps.css">
+    <link rel="stylesheet" href="styles/csv-upload.css">
     <link rel="stylesheet" href="styles/mobile.css">
 </head>
 <body>
@@ -31,6 +32,9 @@
             <!-- Search bar sera ajoutée Phase 6 -->
         </div>
         <div class="top-bar-right">
+            <button class="btn-secondary btn-small" id="btn-upload-csv" style="margin-right: 8px;">
+                📤 Upload CSV
+            </button>
             <button class="btn-icon" id="btn-settings" aria-label="Paramètres">
                 ⚙️
             </button>
@@ -49,9 +53,14 @@
             <!-- Sidebar content sera ajouté progressivement -->
             <div class="sidebar-header">
                 <h2>Territoires</h2>
-                <button class="btn-primary btn-small" id="btn-add-rep">
-                    + Add Rep
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary btn-small" id="btn-upload-csv-sidebar" title="Upload CSV">
+                        📤
+                    </button>
+                    <button class="btn-primary btn-small" id="btn-add-rep">
+                        + Add Rep
+                    </button>
+                </div>
             </div>
             
             <div class="sidebar-content">
@@ -208,6 +217,126 @@
         </div>
     </div>
 
+    <!-- Upload CSV Modal -->
+    <div class="modal" id="modal-upload-csv" role="dialog" aria-labelledby="modal-upload-csv-title" aria-hidden="true">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modal-upload-csv-title">📤 Upload CSV</h2>
+                <button class="btn-icon btn-close" id="btn-close-upload-csv" aria-label="Fermer">
+                    ✕
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-instructions">
+                    <p><strong>Format CSV accepté:</strong></p>
+                    <p class="text-small">Rep, RepEmail, RepPhoto, Client, ClientAddress, ClientCity, ClientPostal, ClientPhone, ClientSince</p>
+                    <p class="text-small" style="margin-top: 8px;">
+                        <a href="example-data.csv" download>📥 Télécharger un exemple CSV</a>
+                    </p>
+                </div>
+                
+                <div class="upload-zone" id="upload-zone">
+                    <input type="file" id="input-csv-file" accept=".csv" style="display: none;">
+                    <div class="upload-zone-content">
+                        <div class="upload-icon">📄</div>
+                        <p><strong>Glissez-déposez votre fichier CSV ici</strong></p>
+                        <p class="text-small">ou</p>
+                        <button class="btn-primary" id="btn-browse-csv">
+                            Parcourir les fichiers
+                        </button>
+                        <p class="text-small" style="margin-top: 12px;">
+                            Formats acceptés: .csv (max 10MB)
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="upload-progress" id="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p class="text-small" id="progress-text">Traitement en cours...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Matches Modal -->
+    <div class="modal" id="modal-review-matches" role="dialog" aria-labelledby="modal-review-matches-title" aria-hidden="true">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-large" style="max-width: 1000px; max-height: 90vh;">
+            <div class="modal-header">
+                <h2 id="modal-review-matches-title">🔍 Review Matches</h2>
+                <button class="btn-icon btn-close" id="btn-close-review-matches" aria-label="Fermer">
+                    ✕
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <div class="review-summary">
+                    <div class="summary-item success">
+                        <span class="summary-icon">✅</span>
+                        <div>
+                            <strong>12</strong>
+                            <p class="text-small">Auto-matched</p>
+                        </div>
+                    </div>
+                    <div class="summary-item warning">
+                        <span class="summary-icon">❓</span>
+                        <div>
+                            <strong>5</strong>
+                            <p class="text-small">Review Required</p>
+                        </div>
+                    </div>
+                    <div class="summary-item error">
+                        <span class="summary-icon">❌</span>
+                        <div>
+                            <strong>2</strong>
+                            <p class="text-small">No Match Found</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section AUTO-MATCHED -->
+                <div class="review-section">
+                    <h3 class="review-section-title success">
+                        ✅ AUTO-MATCHED (12)
+                    </h3>
+                    <div class="review-list" id="review-matched-list">
+                        <!-- Items seront générés dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Section REVIEW REQUIRED -->
+                <div class="review-section">
+                    <h3 class="review-section-title warning">
+                        ❓ REVIEW REQUIRED (5)
+                    </h3>
+                    <div class="review-list" id="review-required-list">
+                        <!-- Items seront générés dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Section NO MATCH FOUND -->
+                <div class="review-section">
+                    <h3 class="review-section-title error">
+                        ❌ NO MATCH FOUND (2)
+                    </h3>
+                    <div class="review-list" id="review-no-match-list">
+                        <!-- Items seront générés dynamiquement -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-cancel-review">
+                    Annuler
+                </button>
+                <button class="btn-primary" id="btn-confirm-review">
+                    Confirmer & Importer (12)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -222,6 +351,8 @@
     <script src="js/map.js"></script>
     <script src="js/territories.js"></script>
     <script src="js/reps.js"></script>
+    <script src="js/clients.js"></script>
+    <script src="js/csv-upload.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

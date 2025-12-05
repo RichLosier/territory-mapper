@@ -1,0 +1,292 @@
+/* ═══════════════════════════════════════════════════════════════
+   CSV UPLOAD STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Upload Instructions */
+.upload-instructions {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.upload-instructions p {
+    margin: var(--spacing-xs) 0;
+}
+
+.upload-instructions a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.upload-instructions a:hover {
+    text-decoration: underline;
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    background: var(--bg-primary);
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(66, 133, 244, 0.05);
+}
+
+.upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(66, 133, 244, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-zone-content {
+    pointer-events: none;
+}
+
+.upload-icon {
+    font-size: 64px;
+    margin-bottom: var(--spacing-md);
+}
+
+.upload-zone p {
+    margin: var(--spacing-sm) 0;
+}
+
+.upload-zone .btn-primary {
+    pointer-events: auto;
+    margin-top: var(--spacing-md);
+}
+
+/* Progress Bar */
+.upload-progress {
+    margin-top: var(--spacing-lg);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius-md);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* Review Summary */
+.review-summary {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.summary-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+}
+
+.summary-item.success {
+    border-left: 4px solid var(--success);
+}
+
+.summary-item.warning {
+    border-left: 4px solid var(--warning);
+}
+
+.summary-item.error {
+    border-left: 4px solid var(--danger);
+}
+
+.summary-icon {
+    font-size: 32px;
+}
+
+.summary-item strong {
+    font-size: var(--font-size-subheader);
+    display: block;
+    color: var(--text-primary);
+}
+
+.summary-item .text-small {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* Review Sections */
+.review-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.review-section-title {
+    font-size: var(--font-size-subheader);
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.review-section-title.success {
+    color: var(--success);
+    border-bottom-color: var(--success);
+}
+
+.review-section-title.warning {
+    color: var(--warning);
+    border-bottom-color: var(--warning);
+}
+
+.review-section-title.error {
+    color: var(--danger);
+    border-bottom-color: var(--danger);
+}
+
+/* Review List */
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.review-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: all var(--transition-base);
+}
+
+.review-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent);
+}
+
+.review-item.matched {
+    border-left: 4px solid var(--success);
+}
+
+.review-item.required {
+    border-left: 4px solid var(--warning);
+}
+
+.review-item.no-match {
+    border-left: 4px solid var(--danger);
+}
+
+.review-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-sm);
+}
+
+.review-item-info {
+    flex: 1;
+}
+
+.review-item-info strong {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+}
+
+.review-item-info .text-small {
+    margin: var(--spacing-xs) 0;
+    color: var(--text-secondary);
+}
+
+.review-item-match {
+    text-align: right;
+}
+
+.match-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.match-badge.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.match-badge.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.match-badge.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+/* Review Options */
+.review-item-options {
+    margin-top: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.review-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.review-option:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent);
+}
+
+.review-option input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.review-option input[type="radio"]:checked + div {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.review-option div {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Review Actions */
+.review-item-actions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
