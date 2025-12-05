@@ -189,6 +189,32 @@ function loadGoogleMaps() {
         console.error('1. La clé API est valide');
         console.error('2. Maps JavaScript API est activée dans Google Cloud Console');
         console.error('3. Les restrictions HTTP referrers permettent votre domaine');
+        
+        // Afficher un message d'erreur plus détaillé
+        const errorDiv = document.getElementById('map-error');
+        if (errorDiv) {
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = `
+                <h3 style="color: #ef4444; margin-bottom: 12px;">❌ Erreur de chargement Google Maps</h3>
+                <p style="margin-bottom: 16px;">La carte ne peut pas se charger. Causes possibles:</p>
+                <ul style="text-align: left; margin-bottom: 16px; color: #666; font-size: 14px;">
+                    <li><strong>Fichier local (file:///):</strong> Utilisez un serveur local</li>
+                    <li>Clé API invalide ou non activée</li>
+                    <li>Restrictions HTTP referrers trop strictes</li>
+                </ul>
+                <div style="background: #f0f9ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #0369a1;">
+                        <strong>💡 Solution rapide:</strong><br>
+                        Dans le terminal, exécutez:<br>
+                        <code style="background: white; padding: 4px 8px; border-radius: 4px; font-family: monospace;">python3 -m http.server 8000</code><br>
+                        Puis ouvrez: <code style="background: white; padding: 4px 8px; border-radius: 4px;">http://localhost:8000</code>
+                    </p>
+                </div>
+                <button class="btn-primary" onclick="location.reload()" style="margin-right: 8px;">Recharger</button>
+                <button class="btn-secondary" onclick="document.getElementById('map-error').style.display='none'">Fermer</button>
+            `;
+        }
+        
         showToast('❌ Erreur lors du chargement de Google Maps. Vérifiez la console (F12).', 'error');
         if (spinner) {
             spinner.style.display = 'none';

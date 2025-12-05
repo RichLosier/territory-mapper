@@ -2,7 +2,10 @@
 # Script pour démarrer un serveur local simple
 
 echo "🚀 Démarrage du serveur local..."
-echo "📡 Ouvrez votre navigateur à: http://localhost:8000"
+echo ""
+echo "📡 IMPORTANT: Google Maps nécessite un serveur HTTP"
+echo "   Ouvrez votre navigateur à: http://localhost:8000"
+echo ""
 echo "⏹️  Appuyez sur Ctrl+C pour arrêter le serveur"
 echo ""
 
@@ -12,7 +15,12 @@ if command -v python3 &> /dev/null; then
 elif command -v python &> /dev/null; then
     python -m SimpleHTTPServer 8000
 else
-    echo "❌ Python n'est pas installé. Utilisez la méthode double-clic ou installez Python."
+    echo "❌ Python n'est pas installé."
+    echo ""
+    echo "💡 Alternatives:"
+    echo "   1. Installez Python depuis python.org"
+    echo "   2. Utilisez Node.js: npx http-server"
+    echo "   3. Utilisez PHP: php -S localhost:8000"
     exit 1
 fi
 
