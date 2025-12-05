@@ -91,6 +91,7 @@ function loadApiKeys() {
 function loadGoogleMaps() {
     if (!AppState.apiKeys.maps) {
         console.error('❌ Clé API Google Maps non configurée');
+        showToast('⚠️ Clé API Google Maps non configurée. Allez dans Settings.', 'warning');
         return;
     }
     
@@ -100,109 +101,150 @@ function loadGoogleMaps() {
     }
     
     console.log('📡 Chargement Google Maps API...');
+    console.log('🔑 Clé API:', AppState.apiKeys.maps.substring(0, 20) + '...');
     
     // Afficher spinner de chargement
     const spinner = document.getElementById('loading-spinner');
     if (spinner) {
         spinner.style.display = 'block';
+        spinner.querySelector('p').textContent = 'Chargement de la carte...';
+    }
+    
+    // Vérifier que le callback global existe
+    if (typeof window.onGoogleMapsLoaded === 'undefined') {
+        window.onGoogleMapsLoaded = function() {
+            console.log('✅ Google Maps API chargée avec succès');
+            AppState.mapsApiLoaded = true;
+            
+            // Masquer spinner
+            const spinner = document.getElementById('loading-spinner');
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
+            
+            // Initialiser la carte
+            initMap();
+            
+            // Initialiser les territoires
+            initTerritories();
+            
+            // Rendre tous les territoires existants
+            renderAllTerritories();
+            
+            // Rendre tous les clients existants
+            renderAllClients();
+            
+            // Rendre tous les dealers existants
+            renderAllDealers();
+            
+            // Sélectionner Ontario par défaut si aucune région
+            if (!DealersState.currentRegion) {
+                setTimeout(() => {
+                    selectRegion('Ontario');
+                }, 500);
+            }
+            
+            // Ajouter des clients mockés pour preview (si aucun client)
+            setTimeout(() => {
+                addMockClients();
+            }, 1000);
+        };
     }
     
     // Créer script tag pour charger Google Maps
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${AppState.apiKeys.maps}&libraries=places,geometry,drawing&callback=onGoogleMapsLoaded`;
+    const apiKey = AppState.apiKeys.maps;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry,drawing&callback=onGoogleMapsLoaded`;
     script.async = true;
     script.defer = true;
+    
     script.onerror = () => {
         console.error('❌ Erreur lors du chargement de Google Maps API');
-        showToast('❌ Erreur lors du chargement de Google Maps. Vérifiez votre clé API.', 'error');
-        if (spinner) spinner.style.display = 'none';
+        console.error('Vérifiez que:');
+        console.error('1. La clé API est valide');
+        console.error('2. Maps JavaScript API est activée dans Google Cloud Console');
+        console.error('3. Les restrictions HTTP referrers permettent votre domaine');
+        showToast('❌ Erreur lors du chargement de Google Maps. Vérifiez la console (F12).', 'error');
+        if (spinner) {
+            spinner.style.display = 'none';
+            spinner.querySelector('p').textContent = 'Erreur de chargement. Vérifiez la console.';
+        }
+    };
+    
+    script.onload = () => {
+        console.log('📜 Script Google Maps chargé, attente du callback...');
     };
     
     document.head.appendChild(script);
+    console.log('📝 Script tag ajouté au DOM');
 }
 
-/**
- * Callback appelé quand Google Maps API est chargée
- * Cette fonction doit être globale pour être accessible par le callback
- */
-window.onGoogleMapsLoaded = function() {
-    console.log('✅ Google Maps API chargée avec succès');
-    AppState.mapsApiLoaded = true;
-    
-    // Masquer spinner
-    const spinner = document.getElementById('loading-spinner');
-    if (spinner) {
-        spinner.style.display = 'none';
-    }
-    
-    // Initialiser la carte
-    initMap();
-    
-    // Initialiser les territoires
-    initTerritories();
-    
-    // Rendre tous les territoires existants
-    renderAllTerritories();
-    
-    // Rendre tous les clients existants
-    renderAllClients();
-    
-    // Rendre tous les dealers existants
-    renderAllDealers();
-    
-    // Sélectionner Ontario par défaut si aucune région
-    if (!DealersState.currentRegion) {
-        setTimeout(() => {
-            selectRegion('Ontario');
-        }, 500);
-    }
-    
-    // Ajouter des clients mockés pour preview (si aucun client)
-    setTimeout(() => {
-        addMockClients();
-    }, 1000);
-};
+// Le callback est maintenant défini dans loadGoogleMaps() pour éviter les problèmes de timing
 
 /**
  * Initialise la carte Google Maps
  */
 function initMap() {
+    console.log('🗺️ Initialisation de la carte...');
+    
     const mapContainer = document.getElementById('map');
     if (!mapContainer) {
         console.error('❌ Container map introuvable');
+        showToast('❌ Erreur: Container map introuvable', 'error');
         return;
     }
+    
+    // Vérifier que Google Maps est chargé
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        console.error('❌ Google Maps API non chargée');
+        showToast('❌ Google Maps API non chargée. Rechargez la page.', 'error');
+        return;
+    }
+    
+    console.log('✅ Google Maps API disponible');
     
     // Centre par défaut: Toronto, Canada
     const defaultCenter = { lat: 43.6532, lng: -79.3832 };
     
-    // Créer la carte
-    AppState.currentMap = new google.maps.Map(mapContainer, {
-        center: defaultCenter,
-        zoom: 10,
-        mapTypeId: 'roadmap',
-        styles: [
-            {
-                featureType: 'poi',
-                elementType: 'labels',
-                stylers: [{ visibility: 'off' }]
-            }
-        ],
-        disableDefaultUI: false,
-        zoomControl: true,
-        mapTypeControl: false,
-        scaleControl: true,
-        streetViewControl: false,
-        rotateControl: false,
-        fullscreenControl: true
-    });
-    
-    console.log('🗺️ Carte Google Maps initialisée');
-    
-    // Écouter les événements de la carte
-    AppState.currentMap.addListener('bounds_changed', () => {
-        // Sera utilisé pour lazy loading des markers dans phases suivantes
-    });
+    try {
+        // Créer la carte
+        AppState.currentMap = new google.maps.Map(mapContainer, {
+            center: defaultCenter,
+            zoom: 10,
+            mapTypeId: 'roadmap',
+            styles: [
+                {
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{ visibility: 'off' }]
+                }
+            ],
+            disableDefaultUI: false,
+            zoomControl: true,
+            mapTypeControl: false,
+            scaleControl: true,
+            streetViewControl: false,
+            rotateControl: false,
+            fullscreenControl: true
+        });
+        
+        console.log('✅ Carte Google Maps initialisée avec succès');
+        showToast('✅ Carte chargée', 'success');
+        
+        // Écouter les événements de la carte
+        AppState.currentMap.addListener('bounds_changed', () => {
+            // Sera utilisé pour lazy loading des markers dans phases suivantes
+        });
+        
+        // Écouter les erreurs de chargement de tiles
+        AppState.currentMap.addListener('tilesloaded', () => {
+            console.log('✅ Tiles de la carte chargées');
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la création de la carte:', error);
+        showToast('❌ Erreur lors de la création de la carte. Vérifiez la console.', 'error');
+    }
 }
 
 /**
