@@ -147,6 +147,16 @@ window.onGoogleMapsLoaded = function() {
     // Rendre tous les clients existants
     renderAllClients();
     
+    // Rendre tous les dealers existants
+    renderAllDealers();
+    
+    // Sélectionner Ontario par défaut si aucune région
+    if (!DealersState.currentRegion) {
+        setTimeout(() => {
+            selectRegion('Ontario');
+        }, 500);
+    }
+    
     // Ajouter des clients mockés pour preview (si aucun client)
     setTimeout(() => {
         addMockClients();
@@ -521,6 +531,57 @@ function clearApiKeys() {
     if (placesStatus) updateStatus(placesStatus, '', 'Non configuré');
     
     showToast('🗑️ Clés API effacées', 'success');
+}
+
+/**
+ * Initialise le sélecteur de région
+ */
+function initRegionSelector() {
+    const selectRegion = document.getElementById('select-region');
+    const btnScanDealers = document.getElementById('btn-scan-dealers');
+    const scanStatus = document.getElementById('scan-status');
+    
+    if (!selectRegion || !btnScanDealers || !scanStatus) return;
+    
+    // Charger la région sauvegardée
+    if (DealersState.currentRegion) {
+        selectRegion.value = DealersState.currentRegion;
+        updateScanButton();
+    }
+    
+    // Changer de région
+    selectRegion.addEventListener('change', (e) => {
+        const region = e.target.value;
+        if (region) {
+            selectRegion(region);
+            updateScanButton();
+        } else {
+            DealersState.currentRegion = null;
+            btnScanDealers.disabled = true;
+            scanStatus.textContent = 'Aucune région sélectionnée';
+        }
+    });
+    
+    // Bouton scan
+    btnScanDealers.addEventListener('click', () => {
+        const region = selectRegion.value;
+        if (region) {
+            scanDealersForRegion(region);
+        }
+    });
+    
+    function updateScanButton() {
+        const region = selectRegion.value;
+        if (region) {
+            btnScanDealers.disabled = false;
+            const count = DealersState.dealers.filter(d => d.region === region).length;
+            if (count > 0) {
+                scanStatus.textContent = `${count} dealers en ${region}`;
+            } else {
+                scanStatus.textContent = `Prêt à scanner ${region}`;
+            }
+        }
+    }
 }
 
 // Initialiser l'app quand le DOM est prêt
