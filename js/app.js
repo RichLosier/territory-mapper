@@ -25,6 +25,21 @@ const AppState = {
 function initApp() {
     console.log('🚀 Initialisation TerritoryPro...');
     
+    // Configuration automatique de la clé API (si fournie)
+    const defaultApiKey = 'AIzaSyA21ef6cszYLyn22AiihKOkLa9ss0EIEDQ';
+    const savedKeys = Storage.get('apiKeys');
+    
+    // Si aucune clé n'est sauvegardée, utiliser la clé par défaut
+    if (!savedKeys || (!savedKeys.maps && !savedKeys.places)) {
+        console.log('🔑 Configuration automatique de la clé API...');
+        Storage.set('apiKeys', {
+            maps: defaultApiKey,
+            places: defaultApiKey
+        });
+        AppState.apiKeys.maps = defaultApiKey;
+        AppState.apiKeys.places = defaultApiKey;
+    }
+    
     // Charger les clés API depuis localStorage
     loadApiKeys();
     
@@ -167,11 +182,14 @@ function initUI() {
             const mapsKeyInput = document.getElementById('input-maps-key');
             const placesKeyInput = document.getElementById('input-places-key');
             
-            if (mapsKeyInput && AppState.apiKeys.maps) {
-                mapsKeyInput.value = AppState.apiKeys.maps;
+            // Charger depuis AppState ou localStorage
+            const savedKeys = Storage.get('apiKeys') || AppState.apiKeys;
+            
+            if (mapsKeyInput && savedKeys.maps) {
+                mapsKeyInput.value = savedKeys.maps;
             }
-            if (placesKeyInput && AppState.apiKeys.places) {
-                placesKeyInput.value = AppState.apiKeys.places;
+            if (placesKeyInput && savedKeys.places) {
+                placesKeyInput.value = savedKeys.places;
             }
         });
     }
@@ -293,6 +311,35 @@ function initSettingsApiKeys() {
             clearApiKeys();
         });
     }
+    
+    // Use same key button
+    const btnUseSameKey = document.getElementById('btn-use-same-key');
+    if (btnUseSameKey && inputMaps && inputPlaces) {
+        btnUseSameKey.addEventListener('click', () => {
+            const mapsKey = inputMaps.value.trim();
+            if (mapsKey) {
+                inputPlaces.value = mapsKey;
+                showToast('✅ Même clé appliquée pour Places API', 'success');
+            } else {
+                showToast('⚠️ Entrez d\'abord une clé Maps', 'warning');
+            }
+        });
+    }
+    
+    // Auto-fill Places avec Maps si Maps change et Places est vide
+    if (inputMaps && inputPlaces) {
+        inputMaps.addEventListener('blur', () => {
+            const mapsKey = inputMaps.value.trim();
+            const placesKey = inputPlaces.value.trim();
+            if (mapsKey && !placesKey) {
+                // Suggérer d'utiliser la même clé
+                const btnUseSame = document.getElementById('btn-use-same-key');
+                if (btnUseSame) {
+                    btnUseSame.style.display = 'inline-block';
+                }
+            }
+        });
+    }
 }
 
 /**
@@ -387,11 +434,20 @@ function updateStatus(statusElement, type, message) {
  */
 function saveApiKeys() {
     const mapsKey = document.getElementById('input-maps-key')?.value.trim() || null;
-    const placesKey = document.getElementById('input-places-key')?.value.trim() || null;
+    let placesKey = document.getElementById('input-places-key')?.value.trim() || null;
     
-    if (!mapsKey && !placesKey) {
-        showToast('⚠️ Entrez au moins une clé API', 'warning');
+    if (!mapsKey) {
+        showToast('⚠️ La clé Maps API est requise', 'warning');
         return;
+    }
+    
+    // Si Places est vide, utiliser la même clé que Maps
+    if (!placesKey) {
+        placesKey = mapsKey;
+        const placesInput = document.getElementById('input-places-key');
+        if (placesInput) {
+            placesInput.value = mapsKey;
+        }
     }
     
     // Sauvegarder dans l'état et localStorage

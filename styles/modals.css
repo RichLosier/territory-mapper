@@ -201,6 +201,44 @@
     text-decoration: underline;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   API SETUP INFO
+   ═══════════════════════════════════════════════════════════════ */
+
+.api-setup-info {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.api-setup-info p {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-body);
+    color: var(--text-primary);
+}
+
+.api-setup-info ol {
+    margin: var(--spacing-sm) 0 0 0;
+    padding-left: var(--spacing-lg);
+}
+
+.api-setup-info li {
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+}
+
+.api-setup-info a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.api-setup-info a:hover {
+    text-decoration: underline;
+}
+
 .form-actions {
     display: flex;
     gap: var(--spacing-sm);
