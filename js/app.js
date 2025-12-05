@@ -125,6 +125,12 @@ window.onGoogleMapsLoaded = function() {
     
     // Initialiser la carte
     initMap();
+    
+    // Initialiser les territoires
+    initTerritories();
+    
+    // Rendre tous les territoires existants
+    renderAllTerritories();
 };
 
 /**

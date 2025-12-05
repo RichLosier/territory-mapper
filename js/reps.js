@@ -595,8 +595,14 @@ function focusRepOnMap(repId) {
     const rep = getRep(repId);
     if (!rep || !AppState.currentMap) return;
     
-    // TODO: Centrer la carte sur le territoire du rep
-    showToast(`Focus sur ${rep.name}`, 'info');
+    if (rep.territory && rep.territory.length > 0) {
+        selectTerritory(repId);
+    } else {
+        // Si pas de territoire, centrer sur Toronto par défaut
+        AppState.currentMap.setCenter({ lat: 43.6532, lng: -79.3832 });
+        AppState.currentMap.setZoom(10);
+        showToast(`${rep.name} n'a pas encore de territoire défini`, 'info');
+    }
 }
 
 /**
