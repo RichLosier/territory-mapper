@@ -55,6 +55,12 @@ function initApp() {
     // Initialiser le module clients
     initClients();
     
+    // Initialiser le module dealers
+    initDealers();
+    
+    // Initialiser le sélecteur de région
+    initRegionSelector();
+    
     // Si les clés API sont déjà configurées, charger Google Maps
     if (AppState.apiKeys.maps) {
         loadGoogleMaps();

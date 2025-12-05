@@ -64,9 +64,30 @@
             </div>
             
             <div class="sidebar-content">
-                <div class="empty-state">
-                    <p>👤 Aucun représentant pour le moment.</p>
-                    <p class="text-small">Cliquez sur "+ Add Rep" pour commencer.</p>
+                <!-- Region Selector -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-header">RÉGION</div>
+                    <select id="select-region" class="form-input" style="width: 100%; margin-bottom: 12px;">
+                        <option value="">Sélectionner une région</option>
+                        <option value="Ontario">Ontario</option>
+                        <option value="Québec">Québec</option>
+                    </select>
+                    <button class="btn-primary btn-small" id="btn-scan-dealers" style="width: 100%;" disabled>
+                        🔍 Scan All Dealers
+                    </button>
+                    <p class="text-small" id="scan-status" style="margin-top: 8px; text-align: center;">
+                        Aucune région sélectionnée
+                    </p>
+                </div>
+                
+                <div class="sidebar-divider"></div>
+                
+                <!-- Reps List -->
+                <div id="reps-list-container">
+                    <div class="empty-state">
+                        <p>👤 Aucun représentant pour le moment.</p>
+                        <p class="text-small">Cliquez sur "+ Add Rep" pour commencer.</p>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -352,6 +373,7 @@
     <script src="js/territories.js"></script>
     <script src="js/reps.js"></script>
     <script src="js/clients.js"></script>
+    <script src="js/dealers.js"></script>
     <script src="js/csv-upload.js"></script>
     <script src="js/app.js"></script>
 </body>

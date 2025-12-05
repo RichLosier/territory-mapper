@@ -502,8 +502,10 @@ function submitRepForm() {
  * Rend la liste des reps dans la sidebar
  */
 function renderRepsList() {
-    const sidebarContent = document.querySelector('.sidebar-content');
-    if (!sidebarContent) return;
+    const container = document.getElementById('reps-list-container');
+    if (!container) return;
+    
+    const sidebarContent = container;
     
     if (RepsState.reps.length === 0) {
         sidebarContent.innerHTML = `
